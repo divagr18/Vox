@@ -1,0 +1,155 @@
+[
+  {
+    "voice_command": "maximize window",
+    "autohotkey_command": "^!m::  ; Press Ctrl + Alt + M to maximize the active window\nWinMaximize, A\nreturn"
+  },
+  {
+    "voice_command": "minimize window",
+    "autohotkey_command": "^!n::  ; Press Ctrl + Alt + N to minimize the active window\nWinMinimize, A\nreturn"
+  },
+  {
+    "voice_command": "close window",
+    "autohotkey_command": "^!c::  ; Press Ctrl + Alt + C to close the active window\nWinClose, A\nreturn"
+  },
+  {
+    "voice_command": "switch to next window",
+    "autohotkey_command": "^!Tab::  ; Press Ctrl + Alt + Tab to switch to the next window\nSend, ^{Tab}\nreturn"
+  },
+  {
+    "voice_command": "switch to previous window",
+    "autohotkey_command": "^!+Tab::  ; Press Ctrl + Alt + Shift + Tab to switch to the previous window\nSend, ^+{Tab}\nreturn"
+  },
+  {
+    "voice_command": "move window to top-left",
+    "autohotkey_command": "^!Left::  ; Press Ctrl + Alt + Left Arrow to move the active window to the top-left corner\nWinMove, A,, 0, 0\nreturn"
+  },
+  {
+    "voice_command": "move window to top-right",
+    "autohotkey_command": "^!Right::  ; Press Ctrl + Alt + Right Arrow to move the active window to the top-right corner\nWinMove, A,, A_ScreenWidth - A_Width, 0\nreturn"
+  },
+  {
+    "voice_command": "move window to bottom-left",
+    "autohotkey_command": "^!Down::  ; Press Ctrl + Alt + Down Arrow to move the active window to the bottom-left corner\nWinMove, A,, 0, A_ScreenHeight - A_Height\nreturn"
+  },
+  {
+    "voice_command": "move window to bottom-right",
+    "autohotkey_command": "^!Up::  ; Press Ctrl + Alt + Up Arrow to move the active window to the bottom-right corner\nWinMove, A,, A_ScreenWidth - A_Width, A_ScreenHeight - A_Height\nreturn"
+  },
+  {
+    "voice_command": "move window to center",
+    "autohotkey_command": "^!c::  ; Press Ctrl + Alt + C to move the active window to the center of the screen\nWinGetPos, WinX, WinY, WinWidth, WinHeight, A\nWinMove, A,, (A_ScreenWidth - WinWidth) // 2, (A_ScreenHeight - WinHeight) //                2\nreturn"
+  },
+  {
+    "voice_command": "resize window to full screen",
+    "autohotkey_command": "^!f::  ; Press Ctrl + Alt + F to resize the active window to full screen\nWinGet, currentWindow, ID, A\nWinMaximize, ahk_id %currentWindow%\nreturn"
+  },
+  {
+    "voice_command": "resize window to half screen",
+    "autohotkey_command": "^!h::  ; Press Ctrl + Alt + H to resize the active window to half of the screen (left side)\nWinGetPos, WinX, WinY, WinWidth, WinHeight, A\nWinMove, A,, 0, 0, A_ScreenWidth//2, A_ScreenHeight\nreturn"
+  },
+  {
+    "voice_command": "resize window to quarter screen",
+    "autohotkey_command": "^!q::  ; Press Ctrl + Alt + Q to resize the active window to a quarter of the screen (top-left quadrant)\nWinGetPos, WinX, WinY, WinWidth, WinHeight, A\nWinMove, A,, 0, 0, A_ScreenWidth//2, A_ScreenHeight//2\nreturn"
+  },
+  {
+    "voice_command": "increase window opacity",
+    "autohotkey_command": "^!i::  ; Press Ctrl + Alt + I to increase the opacity of the active window\nWinSet, Transparent, 200, A  ; Adjust the value (200) to change opacity\nreturn"
+  },
+  {
+    "voice_command": "decrease window opacity",
+    "autohotkey_command": "^!d::  ; Press Ctrl + Alt + D to decrease the opacity of the active window\nWinSet, Transparent, 100, A  ; Adjust the value (100) to change opacity\nreturn"
+  },
+  {
+    "voice_command": "volume up",
+    "autohotkey_command": "^!Up::  ; Press Ctrl + Alt + Up Arrow to increase volume\nSend {Volume_Up}\nreturn"
+  },
+  {
+    "voice_command": "volume down",
+    "autohotkey_command": "^!Down::  ; Press Ctrl + Alt + Down Arrow to decrease volume\nSend {Volume_Down}\nreturn"
+  },
+  {
+    "voice_command": "mute volume",
+    "autohotkey_command": "^!m::  ; Press Ctrl + Alt + M to mute/unmute volume\nSend {Volume_Mute}\nreturn"
+  },
+  {
+    "voice_command": "play/pause media",
+    "autohotkey_command": "^!p::  ; Press Ctrl + Alt + P to play/pause media\nSend {Media_Play_Pause}\nreturn"
+  },
+  {
+    "voice_command": "next track",
+    "autohotkey_command": "^!Right::  ; Press Ctrl + Alt + Right Arrow to play the next track\nSend {Media_Next}\nreturn"
+  },
+  {
+    "voice_command": "previous track",
+    "autohotkey_command": "^!Left::  ; Press Ctrl + Alt + Left Arrow to play the previous track\nSend {Media_Prev}\nreturn"
+  },
+  {
+    "voice_command": "lock computer",
+    "autohotkey_command": "^!l::  ; Press Ctrl + Alt + L to lock the computer\nDllCall(\"LockWorkStation\")\nreturn"
+  },
+  {
+    "voice_command": "sign out",
+    "autohotkey_command": "^!s::  ; Press Ctrl + Alt + S to sign out of the current user session\nShutdown, 0"
+  },
+  {
+    "voice_command": "shut down",
+    "autohotkey_command": "^!o::  ; Press Ctrl + Alt + O to shut down the computer\nShutdown, 1"
+  },
+  {
+    "voice_command": "restart",
+    "autohotkey_command": "^!r::  ; Press Ctrl + Alt + R to restart the computer\nShutdown, 2"
+  },
+  {
+    "voice_command": "sleep",
+    "autohotkey_command": "^!e::  ; Press Ctrl + Alt + E to put the computer to sleep\nDllCall(\"PowrProf\\SetSuspendState\", \"int\", 0, \"int\", 0, \"int\", 0)"
+  },
+  {
+    "voice_command": "hibernate",
+    "autohotkey_command": "^!h::  ; Press Ctrl + Alt + H to hibernate the computer\nDllCall(\"PowrProf\\SetSuspendState\", \"int\", 1, \"int\", 0, \"int\", 0)"
+  },
+
+  {
+    "voice_command": "copy selected text",
+    "autohotkey_command": "^c:: ; Press Ctrl + C to copy selected text\nSend, ^c\nreturn"
+  },
+  {
+    "voice_command": "cut selected text",
+    "autohotkey_command": "^x:: ; Press Ctrl + X to cut selected text\nSend, ^x\nreturn"
+  },
+  {
+    "voice_command": "paste text",
+    "autohotkey_command": "^v:: ; Press Ctrl + V to paste text\nSend, ^v\nreturn"
+  },
+  {
+    "voice_command": "undo last action",
+    "autohotkey_command": "^z:: ; Press Ctrl + Z to undo\nSend, ^z\nreturn"
+  },
+  {
+    "voice_command": "redo last action",
+    "autohotkey_command": "^y:: ; Press Ctrl + Y to redo\nSend, ^y\nreturn"
+  },
+  {
+    "voice_command": "select all text",
+    "autohotkey_command": "^a:: ; Press Ctrl + A to select all text\nSend, ^a\nreturn"
+  },
+  {
+    "voice_command": "deselect text",
+    "autohotkey_command": "^d:: ; Press Ctrl + D to deselect text\nSend, ^d\nreturn"
+  },
+  {
+    "voice_command": "find in document",
+    "autohotkey_command": "^f:: ; Press Ctrl + F to find in document\nSend, ^f\nreturn"
+  },
+  {
+    "voice_command": "replace in document",
+    "autohotkey_command": "^h:: ; Press Ctrl + H to replace in document\nSend, ^h\nreturn"
+  },
+  {
+    "voice_command": "save document",
+    "autohotkey_command": "^s:: ; Press Ctrl + S to save document\nSend, ^s\nreturn"
+  },
+  {
+    "voice_command": "save document as",
+    "autohotkey_command": "^!s:: ; Press Ctrl + Alt + S to save document as\nSend, ^+s\nreturn"
+  }
+]

@@ -1,0 +1,76 @@
+Maximize window
+Minimize window
+Close window
+Switch to next window
+Switch to previous window
+Move window to top-left
+Move window to top-right
+Move window to bottom-left
+Move window to bottom-right
+Move window to center
+Resize window to full screen
+Resize window to half screen
+Resize window to quarter screen
+Increase window opacity
+Decrease window opacity
+Volume up
+Volume down
+Mute volume
+Play/Pause media
+Next track
+Previous track
+Lock computer
+Sign out
+Shut down
+Restart
+Sleep
+Hibernate
+Open Settings
+Open Control Panel
+Open Network Connections
+Open Device Manager
+Open Event Viewer
+Open System Information
+Open Disk Management
+Open Performance Monitor
+Open Resource Monitor
+Open Internet Explorer
+Open Microsoft Edge
+Open Google Chrome
+Open Mozilla Firefox
+Open Safari
+Open Opera
+Open Brave
+Open Vivaldi
+Open Tor Browser
+Open VPN client
+Open Remote Desktop Connection
+Open Virtual Machine Connection
+Open Hyper-V Manager
+Open Windows Sandbox
+Copy selected text
+Cut selected text
+Paste text
+Undo last action
+Redo last action
+Select all text
+Deselect text
+Find in document
+Replace in document
+Save document
+Save document as
+Open file explorer
+Open recent files
+Open new window
+Open new tab
+Close current tab
+Reload page
+Go back
+Go forward
+Scroll up
+Scroll down
+Zoom in
+Zoom out
+Reset zoom
+Print document
+Take screenshot
