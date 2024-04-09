@@ -1,0 +1,50 @@
+Open a Website: Allow the user to specify a website to open.
+Close the Current Tab: Close the current browser tab.
+Switch Tabs: Move between open tabs in the browser.
+Open a File Explorer Window: Open a file explorer window to a specific directory.
+Search on Google: Perform a Google search for a specific query.
+Take a Screenshot: Capture a screenshot of the current screen.
+Open a Specific Application: Instead of just the first 5 characters, allow the user to specify the full name of the application to open.
+Check the Weather: Fetch the current weather forecast for a specific location.
+Open a New Private Window: Open a new private browsing window in the browser.
+Zoom In: Zoom in on the current page in the browser.
+Zoom Out: Zoom out on the current page in the browser.
+Scroll Up: Scroll up on the current page in the browser.
+Scroll Down: Scroll down on the current page in the browser.
+Go Back: Navigate back to the previous page in the browser history.
+Go Forward: Navigate forward to the next page in the browser history.
+Reload Page: Reload the current page in the browser.
+Close Browser: Close the browser window.
+Maximize Window: Maximize the current window.
+Minimize Window: Minimize the current window.
+Restore Window: Restore the window to its previous size.
+Open Calendar: Open the system calendar application.
+Open Calculator: Open the system calculator application.
+Open Notepad: Open the system notepad application.
+Open Task Manager: Open the system task manager.
+Open Control Panel: Open the system control panel.
+Lock Screen: Lock the computer screen.
+Hibernate: Put the computer into hibernate mode.
+Sleep: Put the computer into sleep mode.
+Restart: Restart the computer.
+Shutdown: Shutdown the computer.
+Open a New Word Document: Open a new Microsoft Word document.
+Open a New Excel Spreadsheet: Open a new Microsoft Excel spreadsheet.
+Open a New PowerPoint Presentation: Open a new Microsoft PowerPoint presentation.
+Open a New Email Draft: Open a new email draft in the default email client.
+Open a New Text Message: Open a new text message in the default messaging app.
+Start a Timer: Start a countdown timer for a specified duration.
+Set an Alarm: Set an alarm for a specified time.
+Play Music: Play a specific song or playlist in the default music player.
+Pause Music: Pause the currently playing music.
+Next Song: Skip to the next song in the playlist.
+Previous Song: Go back to the previous song in the playlist.
+Increase Volume: Increase the system volume.
+Decrease Volume: Decrease the system volume.
+Mute: Mute the system volume.
+Open Camera: Open the system camera application.
+Take a Picture: Take a picture using the system camera.
+Record Video: Start recording a video using the system camera.
+Stop Recording: Stop recording a video using the system camera.
+Enable Bluetooth: Turn on Bluetooth on the computer.
+Disable Bluetooth: Turn off Bluetooth on the computer.

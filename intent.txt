@@ -1,0 +1,114 @@
+Maximize window
+Maximize window
+Maximize this, please.
+Take the window full screen.
+Expand the window to its largest size.
+Minimize window
+Minimize window
+Put this window in the taskbar.
+Minimize this for a moment.
+Hide this window for now.
+Close window
+Close window
+I don't need this window anymore.
+Exit the current window.
+Get rid of this window, please.
+Switch to next window
+Switch to next window
+Show me the next open window.
+Switch to the other window.
+What else was I working on?
+Switch to previous window
+Switch to previous window
+Go back to the last window.
+Can you bring back the previous window?
+Switch to the window I was using before.
+Move window to top-left
+Move window to top-left
+Snap the window to the top-left corner.
+Move this to the top-left, please.
+Align the window to the top-left.
+Move window to center
+Move window to center
+Center the window on the screen.
+Put the window in the middle.
+Resize window to full screen
+Resize window to full screen
+Make this window fill the entire screen.
+Switch to full-screen mode.
+Resize window to half/quarter screen
+Resize window to half/quarter screen
+Make the window take up half the screen on the left.
+Can you resize this to a quarter of the screen?
+Increase/Decrease window opacity
+Increase/Decrease window opacity
+Make this window a bit more transparent.
+Could you make this window less see-through?
+Volume up
+Volume up
+I can hardly hear it, turn the volume up.
+increase the volume
+can you increase the volume?
+Mute volume
+Mute volume
+Silence the audio, please.
+Turn off the sound completely.
+Next track
+Next track
+Skip to the next one.
+Lock Computer
+Lock Computer
+Please lock the screen.
+I'm stepping away, lock my computer.
+Sign out
+Sign out
+Could you log me out?
+Sign me out of my account, please.
+Shut down
+Shut down
+I need to turn the computer off.
+Shut down the computer
+Shut my computer down
+Sleep
+Sleep
+Put the computer to sleep.
+Hibernate the system, please.
+Copy selected text
+Copy selected text
+Copy this section for me.
+I want to copy this text.
+Undo last action
+undo
+Oops, can you undo that?
+undo the last change.
+Select all
+Select all
+Highlight everything on this page.
+Find in document
+Find in document analysis
+Help me find the word analysis
+save document
+save document
+save
+Save my work.
+Save document as
+Save document as
+I need to save this file with a different name.
+Open File Explorer
+Open File Explorer
+Show me my files.
+Open new window
+Open new window
+Start a new browser window.
+I need a new window, please.
+Close current tab
+Close current tab
+I'm done with this tab.
+Close this tab out.
+Reload page
+Reload page
+Refresh the website.
+Go Back
+Go Back
+Take me to the previous page.
+Can you go back one step?
