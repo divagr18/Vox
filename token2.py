@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score
 import random
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
-
+import pickle
 # Download the required NLTK resources
 nltk.download('punkt')
 nltk.download('wordnet')
@@ -67,11 +67,6 @@ def stem_text(text):
     return ' '.join(stemmed_tokens)
 
 # Function to perform lemmatization
-lemmatizer = WordNetLemmatizer()
-def lemmatize_text(text):
-    tokens = text.split()
-    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
-    return ' '.join(lemmatized_tokens)
 
 # Iterate through JSON data and perform data augmentation
 for intent, variations in commands_data.items():
@@ -80,17 +75,12 @@ for intent, variations in commands_data.items():
         tokens = variation.split()
         
         # Text normalization
-        normalized_tokens = [text_normalization(token) for token in tokens]
-        
-        # Stemming
-        stemmed_tokens = [stem_text(token) for token in normalized_tokens]
-        
-        # Lemmatization
-        lemmatized_tokens = [lemmatize_text(token) for token in stemmed_tokens]
+        stemmed_tokens = [text_normalization(token) for token in tokens]
+
         
         # Synonym replacement
         augmented_tokens = []
-        for token in lemmatized_tokens:
+        for token in stemmed_tokens:
             if random.random() < 0.4:
                 synonyms = get_synonyms(token)
                 if synonyms:
@@ -103,15 +93,10 @@ for intent, variations in commands_data.items():
         formatted_data.append((augmented_variation.split(), intent))
         
         # Word insertion
-        augmented_tokens = word_insertion(lemmatized_tokens)
+        augmented_tokens = word_insertion(stemmed_tokens)
         augmented_variation = ' '.join(augmented_tokens)
         formatted_data.append((augmented_variation.split(), intent))
         
-        # Word deletion
-        augmented_tokens = word_deletion(lemmatized_tokens)
-        if augmented_tokens:  # Check if the list is not empty
-            augmented_variation = ' '.join(augmented_tokens)
-            formatted_data.append((augmented_variation.split(), intent))
 
 intent_labels = list(set(intent for _, intent in formatted_data))
 intent_label_map = {intent: idx for idx, intent in enumerate(intent_labels)}
@@ -149,7 +134,7 @@ val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
 
 # Fine-tune the model
 optimizer = AdamW(model.parameters(), lr=3e-5, weight_decay=0.01)
-epochs = 10
+epochs = 15
 
 for epoch in range(epochs):
     model.train()
@@ -176,3 +161,14 @@ with torch.no_grad():
 
 val_f1 = f1_score(val_labels_list, val_preds, average='weighted')
 print(f"Validation F1-score: {val_f1}")
+save_directory = "intent_classification_model"
+
+# Save the model itself
+model.save_pretrained(save_directory)
+
+# Save the tokenizer
+tokenizer.save_pretrained(save_directory)
+
+# Save the intent label mapping
+with open(f"{save_directory}/intent_labels.pkl", "wb") as f:
+    pickle.dump(intent_label_map, f)
