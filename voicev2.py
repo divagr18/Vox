@@ -9,6 +9,12 @@ import win32con
 from google.cloud import speech
 import os
 import threading
+import re
+import winreg
+import subprocess
+from googlesearch import search
+from bs4 import BeautifulSoup
+import requests
 from transformers import pipeline
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -20,7 +26,7 @@ labels = ["check mail", "show time",
           "check weather", "enable bluetooth",
           "disable bluetooth", "quit", "refresh", "save", "copy",
           "paste", "delete", "search", "reload", "shut down", "verify this fact", "search google","maximize", "minimize", "close window", "next tab",
-          "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print", "screenshot"]
+          "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print","open app","screenshot"]
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "agile-infinity-419609-0d76c5aa6ca2.json"
 client = speech.SpeechClient()
@@ -132,12 +138,42 @@ def quit_process():
     print("Quitting process...")
     running = False
     processing = False
+def open_target(target):
+    try:
+        # Check if the target is an installed application
+        if is_program_installed(target):
+            subprocess.Popen(target, shell=True)
+        else:
+            # Check if the target is a website by searching for its official website
+            website = get_service_website(target)
+            if website:
+                webbrowser.open(website)
+            else:
+                # Open Google search for the target
+                search_google(target)
+    except Exception as e:
+        print(f"Error opening {target}: {e}")
+
+
+def is_program_installed(program_name):
+    uninstall_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
+
+    for i in range(0, winreg.QueryInfoKey(uninstall_key)[0]):
+        subkey_name = winreg.EnumKey(uninstall_key, i)
+        subkey = winreg.OpenKey(uninstall_key, subkey_name)
+        
+        try:
+            display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
+            if program_name.lower() in display_name.lower():
+                return True
+        except OSError:
+            pass
+        
+    return False
 
 command_actions = {
-    "open mail": open_gmail,
     "check mail": open_gmail,
     "view mail": open_gmail,
-    "open weather": open_weather,
     "check weather": open_weather,
     "view weather": open_weather,
     "enable bluetooth": enable_bluetooth,
@@ -163,9 +199,27 @@ command_actions = {
     "zoom out": zoom_out,
     "reset zoom": reset_zoom,
     "print": print_document,
-    "screenshot": take_screenshot
+    "screenshot": take_screenshot,
+    "open app" : open_target
 }
 
+def get_service_website(service_name):
+    query = f"{service_name} official website"
+    try:
+        # Perform a Google search and return the URL of the most relevant non-advertisement link
+        for url in search(query, num=5, stop=5):
+            # Ignore Wikipedia results
+            if 'wikipedia.org' in url:
+                continue
+
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            ads = soup.find_all('div', class_='uEierd')
+            if not ads:
+                return url
+    except Exception as e:
+        print("An error occurred:", e)
+    return None
 # Variable to control the loop
 running = True
 processing = False  # No need for a separate flag
@@ -193,18 +247,23 @@ def process_audio(recognizer, audio_data):
             transcribed_text = response.results[0].alternatives[0].transcript.lower().strip()
             print("Recognized Speech:", transcribed_text)
 
-            # Perform intent analysis
-            intent = analyze_intent(transcribed_text)
-            print(f"Detected Label: {intent}")  # Print the detected label
-
-            if intent in command_actions:
-                if intent == "search google":
-                    search_query = transcribed_text.replace("search google", "").strip()
-                    command_actions[intent](search_query)
-                else:
-                    command_actions[intent]()
+            if "open" in transcribed_text:
+                # Remove standalone occurrences of the ignore_word
+                target = transcribed_text.replace("open", "").replace("my", "").strip()
+                open_target(target)
             else:
-                print("Command not recognized.")
+                # Perform intent analysis
+                intent = analyze_intent(transcribed_text)
+                print(f"Detected Label: {intent}")  # Print the detected label
+
+                if intent in command_actions:
+                    if intent == "search google":
+                        search_query = transcribed_text.replace("search google", "").strip()
+                        command_actions[intent](search_query)
+                    else:
+                        command_actions[intent]()
+                else:
+                    print("Command not recognized.")
 
             print("Response:", response)
 
@@ -219,7 +278,6 @@ def process_audio(recognizer, audio_data):
         print("Error processing audio:", e)
     finally:
         processing = False
-
 def listen_for_speech():
     global processing, running  # Make 'running' accessible
     recognizer = sr.Recognizer()
