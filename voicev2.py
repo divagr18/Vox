@@ -25,7 +25,7 @@ pipe = pipeline("zero-shot-classification", model="MoritzLaurer/bge-m3-zeroshot-
 labels = ["check mail", "show time",
           "check weather", "enable bluetooth",
           "disable bluetooth", "quit", "refresh", "save", "copy",
-          "paste", "delete", "search", "reload", "shut down", "verify this fact", "search google","maximize", "minimize", "close window", "next tab",
+          "paste", "delete", "search", "reload", "shut down", "verify this fact", "ask a question","search google","maximize", "minimize", "close window", "next tab",
           "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print","open app","screenshot"]
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "agile-infinity-419609-0d76c5aa6ca2.json"
@@ -122,7 +122,8 @@ def search_google(query):
 
     except Exception as e:
         print(f"An error occurred during the search: {e}")
-
+def ask(question):
+    webbrowser.open(f"https://www.google.com/search?q={question}")
 def disable_bluetooth():
     bt_shell = win32com.client.Dispatch("WScript.Shell")
     bt_shell.SendKeys('{F16}')
@@ -140,17 +141,17 @@ def quit_process():
     processing = False
 def open_target(target):
     try:
+        print("1")
         # Check if the target is an installed application
         if is_program_installed(target):
+            print("2")
             subprocess.Popen(target, shell=True)
         else:
             # Check if the target is a website by searching for its official website
-            website = get_service_website(target)
-            if website:
-                webbrowser.open(website)
-            else:
-                # Open Google search for the target
-                search_google(target)
+            print("3")
+            # Open Google search for the target
+            print("5")
+            search_google(target)
     except Exception as e:
         print(f"Error opening {target}: {e}")
 
@@ -200,8 +201,56 @@ command_actions = {
     "reset zoom": reset_zoom,
     "print": print_document,
     "screenshot": take_screenshot,
-    "open app" : open_target
+    "open app" : open_target,
+    "ask a question" : ask
 }
+windows_apps = [
+"Control Panel",
+"Disk Management",
+"Task Manager",
+"Command Prompt",
+"PowerShell",
+"Registry Editor",
+"Event Viewer",
+"Device Manager",
+"Disk Defragmenter",
+"Disk Cleanup",
+"System Configuration (msconfig)",
+"System Information",
+"System Restore",
+"Update",
+"Defender",
+"Firewall",
+"Remote Desktop Connection",
+"Hyper-V Manager",
+"Sandbox",
+"Terminal",
+"Notepad",
+"WordPad",
+"Paint",
+"Snipping Tool",
+"Character Map",
+"Sticky Notes",
+"Calculator",
+"Media Player",
+"Photo Viewer",
+"Internet Explorer",
+"Microsoft Edge",
+"Remote Assistance",
+"Mobility Center",
+"Ease of Access Center",
+"Security",
+"Backup and Restore",
+"Management Instrumentation (WMI)",
+"Performance Monitor",
+"Resource Monitor",
+"Subsystem for Linux (WSL)",
+"PowerToys",
+"Administrative Tools",
+"Troubleshooting Tools",
+"Remote Management (WinRM)",
+"System Image Manager (SIM)"
+]
 
 def get_service_website(service_name):
     query = f"{service_name} official website"
@@ -227,7 +276,6 @@ processing = False  # No need for a separate flag
 # Consolidated audio processing with Google Speech-to-Text v2
 def process_audio(recognizer, audio_data):
     global running, processing
-
     if not running:
         return
 
@@ -247,21 +295,36 @@ def process_audio(recognizer, audio_data):
             transcribed_text = response.results[0].alternatives[0].transcript.lower().strip()
             print("Recognized Speech:", transcribed_text)
 
-            if "open" in transcribed_text:
-                # Remove standalone occurrences of the ignore_word
-                target = transcribed_text.replace("open", "").replace("my", "").strip()
-                open_target(target)
+            # Split the transcribed text into words
+            words = transcribed_text.split()
+
+            # Check if the command starts with "open"
+            if words[0] == "open":
+                # Check if the second word is "my" and extract the target
+                if len(words) >= 2 and words[1] == "my":
+                    target = " ".join(words[2:])
+                else:
+                    target = " ".join(words[1:])
+
+                # Check if the target is a Windows app
+                if target.lower() in [app.lower() for app in windows_apps]:
+                    try:
+                        subprocess.Popen(target, shell=True)
+                    except Exception as e:
+                        print(f"Error opening {target}: {e}")
+                else:
+                    # If not a Windows app, call the open_target function
+                    open_target(target)
             else:
                 # Perform intent analysis
                 intent = analyze_intent(transcribed_text)
+                
                 print(f"Detected Label: {intent}")  # Print the detected label
 
+                if intent == "ask a question":
+                    ask(transcribed_text)    
                 if intent in command_actions:
-                    if intent == "search google":
-                        search_query = transcribed_text.replace("search google", "").strip()
-                        command_actions[intent](search_query)
-                    else:
-                        command_actions[intent]()
+                    command_actions[intent]()
                 else:
                     print("Command not recognized.")
 
@@ -278,6 +341,8 @@ def process_audio(recognizer, audio_data):
         print("Error processing audio:", e)
     finally:
         processing = False
+
+
 def listen_for_speech():
     global processing, running  # Make 'running' accessible
     recognizer = sr.Recognizer()
