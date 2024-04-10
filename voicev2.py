@@ -19,6 +19,12 @@ from transformers import pipeline
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import pyttsx3
+engine = pyttsx3.init()
+language = 'en' 
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)  # For a different voice
+engine.setProperty('rate', 125)
 shell = win32com.client.Dispatch("WScript.Shell")
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 pipe = pipeline("zero-shot-classification", model="MoritzLaurer/bge-m3-zeroshot-v2.0")
@@ -58,6 +64,8 @@ def has_sufficient_energy(audio_data):
 def maximize_window():
     hwnd = win32gui.GetForegroundWindow()  # Get the active window
     win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+    engine.say("maximising window")
+    engine.runAndWait()
 
 def minimize_window():
     hwnd = win32gui.GetForegroundWindow()  
@@ -310,6 +318,8 @@ def process_audio(recognizer, audio_data):
                 if target.lower() in [app.lower() for app in windows_apps]:
                     try:
                         subprocess.Popen(target, shell=True)
+                        engine.say("Opening"+target)
+                        print("done")
                     except Exception as e:
                         print(f"Error opening {target}: {e}")
                 else:
