@@ -28,6 +28,17 @@ engine.setProperty('rate', 125)
 shell = win32com.client.Dispatch("WScript.Shell")
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 pipe = pipeline("zero-shot-classification", model="MoritzLaurer/bge-m3-zeroshot-v2.0")
+class Command:
+    def __init__(self, text, action, target=None):
+        self.text = text
+        self.action = action
+        self.target = target
+
+    def execute(self):
+        if self.target:
+            self.action(self.target)
+        else:
+            self.action()
 labels = ["check mail", "show time",
           "check weather", "enable bluetooth",
           "disable bluetooth", "quit", "refresh", "save", "copy",
@@ -35,6 +46,7 @@ labels = ["check mail", "show time",
           "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print","open app","screenshot"]
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "agile-infinity-419609-0d76c5aa6ca2.json"
+command_queue = []
 client = speech.SpeechClient()
 ENERGY_THRESHOLD = 0.1
 def simple_frequency_check(audio_array):    
@@ -48,18 +60,36 @@ def analyze_intent(transcribed_text):
     results = []
     for label in labels:
         result = pipe(transcribed_text, label)
-        results.append({
-            'label': label,
-            'score': result['scores'][0]
-        })
+        if 'scores' in result and result['scores']:
+            score = result['scores'][0]
+            results.append({
+                'label': label,
+                'score': score
+            })
 
-    results.sort(key=lambda x: x['score'], reverse=True)
-    top_label = results[0]['label']
-    return top_label
+    if results:
+        results.sort(key=lambda x: x['score'], reverse=True)
+        top_label = results[0]['label']
+
+        if top_label in command_actions:
+            command = Command(transcribed_text, command_actions[top_label])
+            command_queue.append(command)
+        else:
+            print("Command not recognized.")
+
+        return top_label
+    else:
+        print("Unable to analyze intent.")
+        return None
 def has_sufficient_energy(audio_data):
     audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)  # Convert to NumPy array
     rms = np.sqrt(np.mean(audio_array**2))  # Calculate RMS
     return rms > ENERGY_THRESHOLD
+
+
+def split_commands(text):
+    pattern = r'(and|&|\+|,)'
+    return re.split(pattern, text, flags=re.IGNORECASE)
 # Define the command actions
 def maximize_window():
     hwnd = win32gui.GetForegroundWindow()  # Get the active window
@@ -153,17 +183,43 @@ def open_target(target):
         # Check if the target is an installed application
         if is_program_installed(target):
             print("2")
-            subprocess.Popen(target, shell=True)
+            command = Command(target, subprocess.Popen, target)
+            command.execute()
+            engine.say("Opening " + target)
+            print("done")
+        # Check if the target is a built-in Windows application or setting
+        elif is_builtin_windows_app(target):
+            print("3")
+            subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
+            engine.say("Opening " + target)
+            print("done")
         else:
             # Check if the target is a website by searching for its official website
-            print("3")
+            print("4")
             # Open Google search for the target
             print("5")
-            search_google(target)
+            command = Command(target, search_google, target)
+            command.execute()
     except Exception as e:
         print(f"Error opening {target}: {e}")
 
-
+def is_builtin_windows_app(app_name):
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"\\CLSID")
+        with key:
+            for i in range(winreg.QueryInfoKey(key)[0]):
+                clsid = winreg.EnumKey(key, i)
+                try:
+                    key_path = rf"\\CLSID\{clsid}\\System.ApplicationName"
+                    with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, key_path):
+                        app_name_reg = winreg.QueryValueEx(key, "")[0]
+                        if app_name_reg.lower() == app_name.lower():
+                            return True
+                except WindowsError:
+                    pass
+    except WindowsError:
+        pass
+    return False
 def is_program_installed(program_name):
     uninstall_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
 
@@ -179,7 +235,22 @@ def is_program_installed(program_name):
             pass
         
     return False
+def handle_compound_command(command):
+    targets = command.split()[1:]  # Extract the targets after the "open" keyword
+    actions = []
+    for target in targets:
+        # Check if the target is a built-in Windows application or setting
+        if is_builtin_windows_app(target):
+            action = lambda: subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
+            actions.append(action)
+        # Check if the target is an installed application
+        elif is_program_installed(target):
+            action = lambda: subprocess.Popen(target, shell=True)
+            actions.append(action)
+        else:
+            print(f"Skipping unknown target: {target}")
 
+    return actions
 command_actions = {
     "check mail": open_gmail,
     "view mail": open_gmail,
@@ -229,6 +300,7 @@ windows_apps = [
 "Update",
 "Defender",
 "Firewall",
+"settings",
 "Remote Desktop Connection",
 "Hyper-V Manager",
 "Sandbox",
@@ -259,7 +331,10 @@ windows_apps = [
 "Remote Management (WinRM)",
 "System Image Manager (SIM)"
 ]
-
+def execute_command_queue():
+    while command_queue:
+        command = command_queue.pop(0)
+        command.execute()
 def get_service_website(service_name):
     query = f"{service_name} official website"
     try:
@@ -303,42 +378,25 @@ def process_audio(recognizer, audio_data):
             transcribed_text = response.results[0].alternatives[0].transcript.lower().strip()
             print("Recognized Speech:", transcribed_text)
 
-            # Split the transcribed text into words
-            words = transcribed_text.split()
+            # Split the transcribed text into separate commands
+            commands = split_commands(transcribed_text)
 
-            # Check if the command starts with "open"
-            if words[0] == "open":
-                # Check if the second word is "my" and extract the target
-                if len(words) >= 2 and words[1] == "my":
-                    target = " ".join(words[2:])
+            for command in commands:
+                # Check if the command starts with "open"
+                words = command.split()
+                if words[0] == "open":
+                    # Handle compound commands like "open settings command prompt firewall"
+                    actions = handle_compound_command(command)
+                    for action in actions:
+                        action()
                 else:
-                    target = " ".join(words[1:])
-
-                # Check if the target is a Windows app
-                if target.lower() in [app.lower() for app in windows_apps]:
-                    try:
-                        subprocess.Popen(target, shell=True)
-                        engine.say("Opening"+target)
-                        print("done")
-                    except Exception as e:
-                        print(f"Error opening {target}: {e}")
-                else:
-                    # If not a Windows app, call the open_target function
-                    open_target(target)
-            else:
-                # Perform intent analysis
-                intent = analyze_intent(transcribed_text)
-                
-                print(f"Detected Label: {intent}")  # Print the detected label
-
-                if intent == "ask a question":
-                    ask(transcribed_text)    
-                if intent in command_actions:
-                    command_actions[intent]()
-                else:
-                    print("Command not recognized.")
+                    # Perform intent analysis and add commands to the queue
+                    analyze_intent(command)
 
             print("Response:", response)
+
+            # Execute commands from the queue
+            execute_command_queue()
 
         else:
             print("No speech recognized.")
@@ -352,7 +410,7 @@ def process_audio(recognizer, audio_data):
     finally:
         processing = False
 
-
+        
 def listen_for_speech():
     global processing, running  # Make 'running' accessible
     recognizer = sr.Recognizer()
