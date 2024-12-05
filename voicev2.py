@@ -23,7 +23,7 @@ import pyttsx3
 engine = pyttsx3.init()
 language = 'en' 
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)  # For a different voice
+engine.setProperty('voice', voices[1].id) 
 engine.setProperty('rate', 125)
 shell = win32com.client.Dispatch("WScript.Shell")
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
@@ -45,7 +45,7 @@ labels = ["check mail", "show time",
           "paste", "delete", "search", "reload", "shut down", "verify this fact", "ask a question","search google","maximize", "minimize", "close window", "next tab",
           "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print","open app","screenshot"]
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "agile-infinity-419609-0d76c5aa6ca2.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "redacted"
 command_queue = []
 client = speech.SpeechClient()
 ENERGY_THRESHOLD = 0.1
@@ -53,7 +53,7 @@ def simple_frequency_check(audio_array):
     frequencies = np.fft.rfft(audio_array)
     human_speech_freq_range = (100, 5000) 
     speech_freq_threshold = 1000 
-    relevant_frequencies = frequencies[human_speech_freq_range[0]:human_speech_freq_range[1]] # Correct slicing
+    relevant_frequencies = frequencies[human_speech_freq_range[0]:human_speech_freq_range[1]] 
     return np.any(relevant_frequencies > speech_freq_threshold)
 
 def analyze_intent(transcribed_text):
@@ -82,17 +82,17 @@ def analyze_intent(transcribed_text):
         print("Unable to analyze intent.")
         return None
 def has_sufficient_energy(audio_data):
-    audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)  # Convert to NumPy array
-    rms = np.sqrt(np.mean(audio_array**2))  # Calculate RMS
+    audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)
+    rms = np.sqrt(np.mean(audio_array**2)) 
     return rms > ENERGY_THRESHOLD
 
 
 def split_commands(text):
     pattern = r'(and|&|\+|,)'
     return re.split(pattern, text, flags=re.IGNORECASE)
-# Define the command actions
+
 def maximize_window():
-    hwnd = win32gui.GetForegroundWindow()  # Get the active window
+    hwnd = win32gui.GetForegroundWindow()
     win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
     engine.say("maximising window")
     engine.runAndWait()
@@ -180,23 +180,23 @@ def quit_process():
 def open_target(target):
     try:
         print("1")
-        # Check if the target is an installed application
+
         if is_program_installed(target):
             print("2")
             command = Command(target, subprocess.Popen, target)
             command.execute()
             engine.say("Opening " + target)
             print("done")
-        # Check if the target is a built-in Windows application or setting
+
         elif is_builtin_windows_app(target):
             print("3")
             subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
             engine.say("Opening " + target)
             print("done")
         else:
-            # Check if the target is a website by searching for its official website
+
             print("4")
-            # Open Google search for the target
+
             print("5")
             command = Command(target, search_google, target)
             command.execute()
@@ -236,14 +236,12 @@ def is_program_installed(program_name):
         
     return False
 def handle_compound_command(command):
-    targets = command.split()[1:]  # Extract the targets after the "open" keyword
+    targets = command.split()[1:]
     actions = []
     for target in targets:
-        # Check if the target is a built-in Windows application or setting
         if is_builtin_windows_app(target):
             action = lambda: subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
             actions.append(action)
-        # Check if the target is an installed application
         elif is_program_installed(target):
             action = lambda: subprocess.Popen(target, shell=True)
             actions.append(action)
@@ -338,7 +336,6 @@ def execute_command_queue():
 def get_service_website(service_name):
     query = f"{service_name} official website"
     try:
-        # Perform a Google search and return the URL of the most relevant non-advertisement link
         for url in search(query, num=5, stop=5):
             # Ignore Wikipedia results
             if 'wikipedia.org' in url:
@@ -354,9 +351,7 @@ def get_service_website(service_name):
     return None
 # Variable to control the loop
 running = True
-processing = False  # No need for a separate flag
-
-# Consolidated audio processing with Google Speech-to-Text v2
+processing = False  # No need for a separate fla
 def process_audio(recognizer, audio_data):
     global running, processing
     if not running:
@@ -390,12 +385,10 @@ def process_audio(recognizer, audio_data):
                     for action in actions:
                         action()
                 else:
-                    # Perform intent analysis and add commands to the queue
                     analyze_intent(command)
 
             print("Response:", response)
 
-            # Execute commands from the queue
             execute_command_queue()
 
         else:
@@ -412,15 +405,15 @@ def process_audio(recognizer, audio_data):
 
         
 def listen_for_speech():
-    global processing, running  # Make 'running' accessible
+    global processing, running
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening for speech...")
-        recognizer.adjust_for_ambient_noise(source, duration=0.5)  # Adjust for 0.5 seconds
+        recognizer.adjust_for_ambient_noise(source, duration=0.5)
         while running:
             try:
                 audio_data = recognizer.listen(source)
-                audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)  # Define audio_array
+                audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)
                 if has_sufficient_energy(audio_data) and simple_frequency_check(audio_array):
                     if not processing:
                         processing = True
@@ -432,17 +425,14 @@ def listen_for_speech():
                 print("User initiated shutdown...")  # More informative message
                 running = False  # Stop the listening loop directly
                 break
-# Function to start audio processing
 def start_process():
     global running
     print("Transcription started... Press 'Ctrl + Q' to stop.")
     threading.Thread(target=listen_for_speech).start()
 
-# Function to stop audio processing
 def stop_process():
     global running
     print("Transcription stopped.")
     running = False
 
-# Start the process
 start_process()
