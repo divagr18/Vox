@@ -20,14 +20,17 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import pyttsx3
+
 engine = pyttsx3.init()
-language = 'en' 
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id) 
-engine.setProperty('rate', 125)
+language = "en"
+voices = engine.getProperty("voices")
+engine.setProperty("voice", voices[1].id)
+engine.setProperty("rate", 125)
 shell = win32com.client.Dispatch("WScript.Shell")
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 pipe = pipeline("zero-shot-classification", model="MoritzLaurer/bge-m3-zeroshot-v2.0")
+
+
 class Command:
     def __init__(self, text, action, target=None):
         self.text = text
@@ -39,57 +42,104 @@ class Command:
             self.action(self.target)
         else:
             self.action()
-labels = ["check mail", "show time",
-          "check weather", "enable bluetooth",
-          "disable bluetooth", "quit", "refresh", "save", "copy",
-          "paste", "delete", "search", "reload", "shut down", "verify this fact", "ask a question","search google","maximize", "minimize", "close window", "next tab",
-          "previous tab","next window","previous window", "reload", "back", "forward", "scroll up", "scroll down", "zoom in", "zoom out", "reset zoom", "print","open app","screenshot"]
 
+
+labels = [
+    "check mail",
+    "show time",
+    "check weather",
+    "enable bluetooth",
+    "disable bluetooth",
+    "quit",
+    "refresh",
+    "save",
+    "copy",
+    "paste",
+    "delete",
+    "search",
+    "reload",
+    "shut down",
+    "verify this fact",
+    "ask a question",
+    "search google",
+    "maximize",
+    "minimize",
+    "close window",
+    "next tab",
+    "previous tab",
+    "next window",
+    "previous window",
+    "reload",
+    "back",
+    "forward",
+    "scroll up",
+    "scroll down",
+    "zoom in",
+    "zoom out",
+    "reset zoom",
+    "print",
+    "open app",
+    "screenshot",
+]
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "redacted"
 command_queue = []
 client = speech.SpeechClient()
 ENERGY_THRESHOLD = 0.1
-def simple_frequency_check(audio_array):    
+
+
+def simple_frequency_check(audio_array):
     frequencies = np.fft.rfft(audio_array)
-    human_speech_freq_range = (100, 5000) 
-    speech_freq_threshold = 1000 
-    relevant_frequencies = frequencies[human_speech_freq_range[0]:human_speech_freq_range[1]] 
+    human_speech_freq_range = 100, 5000
+    speech_freq_threshold = 1000
+    relevant_frequencies = frequencies[
+        human_speech_freq_range[0] : human_speech_freq_range[1]
+    ]
     return np.any(relevant_frequencies > speech_freq_threshold)
 
+
 def analyze_intent(transcribed_text):
+    """Analyzes the intent of a given transcribed text by scoring it against predefined labels.
+
+    Args:
+        transcribed_text (str): The text obtained from speech transcription to be analyzed.
+
+    Returns:
+        str or None: The label with the highest confidence score if recognized; otherwise, None.
+
+    This function processes the input text using a pipeline with multiple labels, collects their scores,
+    and identifies the most probable intent. If the top intent corresponds to a known command, it creates
+    a Command object and appends it to the command queue. If no matching intent is found or scoring fails,
+    it logs an appropriate message and returns None."""
     results = []
     for label in labels:
         result = pipe(transcribed_text, label)
-        if 'scores' in result and result['scores']:
-            score = result['scores'][0]
-            results.append({
-                'label': label,
-                'score': score
-            })
-
+        if "scores" in result and result["scores"]:
+            score = result["scores"][0]
+            results.append({"label": label, "score": score})
     if results:
-        results.sort(key=lambda x: x['score'], reverse=True)
-        top_label = results[0]['label']
-
+        results.sort(key=lambda x: x["score"], reverse=True)
+        top_label = results[0]["label"]
         if top_label in command_actions:
             command = Command(transcribed_text, command_actions[top_label])
             command_queue.append(command)
         else:
             print("Command not recognized.")
-
         return top_label
     else:
         print("Unable to analyze intent.")
         return None
+
+
 def has_sufficient_energy(audio_data):
     audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)
-    rms = np.sqrt(np.mean(audio_array**2)) 
+    rms = np.sqrt(np.mean(audio_array**2))
     return rms > ENERGY_THRESHOLD
 
 
 def split_commands(text):
-    pattern = r'(and|&|\+|,)'
+    pattern = "(and|&|\\+|,)"
     return re.split(pattern, text, flags=re.IGNORECASE)
+
 
 def maximize_window():
     hwnd = win32gui.GetForegroundWindow()
@@ -97,120 +147,193 @@ def maximize_window():
     engine.say("maximising window")
     engine.runAndWait()
 
+
 def minimize_window():
-    hwnd = win32gui.GetForegroundWindow()  
+    hwnd = win32gui.GetForegroundWindow()
     win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
 
-def close_window(): 
-    shell.SendKeys('%{F4}')  # Alt + F4
+
+def close_window():
+    """Closes the currently active window by sending the Alt+F4 keyboard shortcut.
+
+    Uses the shell.SendKeys method to simulate pressing Alt+F4, which is the standard shortcut for closing windows in Windows environments.
+
+    Args:
+        None
+
+    Returns:
+        None"""
+    shell.SendKeys("%{F4}")
+
 
 def switch_to_next_tab():
-    shell.SendKeys('^{TAB}')  # Ctrl + Tab
+    shell.SendKeys("^{TAB}")
+
 
 def switch_to_previous_tab():
-    shell.SendKeys('^+{TAB}')  # Ctrl + Shift + Tab
+    shell.SendKeys("^+{TAB}")
+
+
 def switch_to_next_window():
-    shell.SendKeys('^{TAB}')  # Ctrl + Tab
+    shell.SendKeys("^{TAB}")
+
 
 def switch_to_previous_window():
-    shell.SendKeys('^+{TAB}')  # Ctrl + Shift + Tab
+    shell.SendKeys("^+{TAB}")
+
 
 def reload_page():
-    shell.SendKeys('^R')  # Ctrl + R
+    shell.SendKeys("^R")
+
 
 def go_back():
-    shell.SendKeys('%{LEFT}')  # Alt + Left Arrow
+    shell.SendKeys("%{LEFT}")
+
 
 def go_forward():
-    shell.SendKeys('%{RIGHT}')  # Alt + Right Arrow
+    shell.SendKeys("%{RIGHT}")
+
 
 def scroll_up():
-    pyautogui.scroll(100) 
+    pyautogui.scroll(100)
+
 
 def scroll_down():
     pyautogui.scroll(-100)
 
+
 def zoom_in():
-    shell.SendKeys('^+')  # Ctrl + '+'
+    """Simulates the keyboard shortcut for zooming in by sending Ctrl and '+' key presses.
+
+    This function uses the shell interface to send the Ctrl+'+' key combination, which is commonly used to increase zoom level in many applications.
+
+    Args:
+        None
+
+    Returns:
+        None"""
+    shell.SendKeys("^+")
+
 
 def zoom_out():
-    shell.SendKeys('^-')  # Ctrl + '-'
+    shell.SendKeys("^-")
+
 
 def reset_zoom():
-    shell.SendKeys('^0')  # Ctrl + 0
+    shell.SendKeys("^0")
+
 
 def print_document():
-    shell.SendKeys('^P')  # Ctrl + P
+    shell.SendKeys("^P")
+
 
 def take_screenshot():
     screenshot = pyautogui.screenshot()
     screenshot.save("screenshot.png")
+
+
 def enable_bluetooth():
+    """Simulates pressing the F15 key to enable Bluetooth via a Windows shell command.
+
+    This function uses the Windows Script Host shell interface to send the F15 keypress,
+    which is assumed to trigger Bluetooth enabling on the system.
+
+    Args:
+        None
+
+    Returns:
+        None"""
     bt_shell = win32com.client.Dispatch("WScript.Shell")
-    bt_shell.SendKeys('{F15}')
+    bt_shell.SendKeys("{F15}")
+
+
 def search_google(query):
     driver = webdriver.Chrome()
     driver.get("https://www.google.com")
-
     try:
         search_box = driver.find_element(By.NAME, "q")
-
         search_box.send_keys(query)
         search_box.send_keys(Keys.RETURN)
-
     except Exception as e:
         print(f"An error occurred during the search: {e}")
+
+
 def ask(question):
+    """Open a web browser to perform a Google search for the given question.
+
+    Args:
+        question (str): The query string to search on Google.
+
+    Returns:
+        None
+
+    This function launches the default web browser and directs it to a Google search results page
+    for the specified question. It does not return any value."""
     webbrowser.open(f"https://www.google.com/search?q={question}")
+
+
 def disable_bluetooth():
+    """Simulates pressing the F16 key to disable Bluetooth on Windows.
+
+    This function uses the Windows Script Host shell interface to send a
+    key press event for the F16 key, which is assumed to toggle or disable
+    Bluetooth on the target system.
+
+    Args:
+        None
+
+    Returns:
+        None"""
     bt_shell = win32com.client.Dispatch("WScript.Shell")
-    bt_shell.SendKeys('{F16}')
+    bt_shell.SendKeys("{F16}")
+
 
 def open_gmail():
     webbrowser.open("https://mail.google.com")
 
+
 def open_weather():
     webbrowser.open("https://www.weather.com")
+
 
 def quit_process():
     global running
     print("Quitting process...")
     running = False
     processing = False
+
+
 def open_target(target):
     try:
         print("1")
-
         if is_program_installed(target):
             print("2")
             command = Command(target, subprocess.Popen, target)
             command.execute()
             engine.say("Opening " + target)
             print("done")
-
         elif is_builtin_windows_app(target):
             print("3")
             subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
             engine.say("Opening " + target)
             print("done")
         else:
-
             print("4")
-
             print("5")
             command = Command(target, search_google, target)
             command.execute()
     except Exception as e:
         print(f"Error opening {target}: {e}")
 
+
 def is_builtin_windows_app(app_name):
     try:
-        key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"\\CLSID")
+        key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "\\\\CLSID")
         with key:
             for i in range(winreg.QueryInfoKey(key)[0]):
                 clsid = winreg.EnumKey(key, i)
                 try:
-                    key_path = rf"\\CLSID\{clsid}\\System.ApplicationName"
+                    key_path = f"\\\\CLSID\\{clsid}\\\\System.ApplicationName"
                     with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, key_path):
                         app_name_reg = winreg.QueryValueEx(key, "")[0]
                         if app_name_reg.lower() == app_name.lower():
@@ -220,35 +343,42 @@ def is_builtin_windows_app(app_name):
     except WindowsError:
         pass
     return False
-def is_program_installed(program_name):
-    uninstall_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
 
+
+def is_program_installed(program_name):
+    uninstall_key = winreg.OpenKey(
+        winreg.HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+    )
     for i in range(0, winreg.QueryInfoKey(uninstall_key)[0]):
         subkey_name = winreg.EnumKey(uninstall_key, i)
         subkey = winreg.OpenKey(uninstall_key, subkey_name)
-        
         try:
             display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
             if program_name.lower() in display_name.lower():
                 return True
         except OSError:
             pass
-        
     return False
+
+
 def handle_compound_command(command):
     targets = command.split()[1:]
     actions = []
     for target in targets:
         if is_builtin_windows_app(target):
-            action = lambda: subprocess.Popen(f"explorer.exe shell:::{target}", shell=True)
+            action = lambda: subprocess.Popen(
+                f"explorer.exe shell:::{target}", shell=True
+            )
             actions.append(action)
         elif is_program_installed(target):
             action = lambda: subprocess.Popen(target, shell=True)
             actions.append(action)
         else:
             print(f"Skipping unknown target: {target}")
-
     return actions
+
+
 command_actions = {
     "check mail": open_gmail,
     "view mail": open_gmail,
@@ -263,7 +393,7 @@ command_actions = {
     "search google": search_google,
     "maximize": maximize_window,
     "minimize": minimize_window,
-    "close window": close_window, 
+    "close window": close_window,
     "next tab": switch_to_next_tab,
     "previous tab": switch_to_previous_tab,
     "next window": switch_to_next_window,
@@ -278,132 +408,152 @@ command_actions = {
     "reset zoom": reset_zoom,
     "print": print_document,
     "screenshot": take_screenshot,
-    "open app" : open_target,
-    "ask a question" : ask
+    "open app": open_target,
+    "ask a question": ask,
 }
 windows_apps = [
-"Control Panel",
-"Disk Management",
-"Task Manager",
-"Command Prompt",
-"PowerShell",
-"Registry Editor",
-"Event Viewer",
-"Device Manager",
-"Disk Defragmenter",
-"Disk Cleanup",
-"System Configuration (msconfig)",
-"System Information",
-"System Restore",
-"Update",
-"Defender",
-"Firewall",
-"settings",
-"Remote Desktop Connection",
-"Hyper-V Manager",
-"Sandbox",
-"Terminal",
-"Notepad",
-"WordPad",
-"Paint",
-"Snipping Tool",
-"Character Map",
-"Sticky Notes",
-"Calculator",
-"Media Player",
-"Photo Viewer",
-"Internet Explorer",
-"Microsoft Edge",
-"Remote Assistance",
-"Mobility Center",
-"Ease of Access Center",
-"Security",
-"Backup and Restore",
-"Management Instrumentation (WMI)",
-"Performance Monitor",
-"Resource Monitor",
-"Subsystem for Linux (WSL)",
-"PowerToys",
-"Administrative Tools",
-"Troubleshooting Tools",
-"Remote Management (WinRM)",
-"System Image Manager (SIM)"
+    "Control Panel",
+    "Disk Management",
+    "Task Manager",
+    "Command Prompt",
+    "PowerShell",
+    "Registry Editor",
+    "Event Viewer",
+    "Device Manager",
+    "Disk Defragmenter",
+    "Disk Cleanup",
+    "System Configuration (msconfig)",
+    "System Information",
+    "System Restore",
+    "Update",
+    "Defender",
+    "Firewall",
+    "settings",
+    "Remote Desktop Connection",
+    "Hyper-V Manager",
+    "Sandbox",
+    "Terminal",
+    "Notepad",
+    "WordPad",
+    "Paint",
+    "Snipping Tool",
+    "Character Map",
+    "Sticky Notes",
+    "Calculator",
+    "Media Player",
+    "Photo Viewer",
+    "Internet Explorer",
+    "Microsoft Edge",
+    "Remote Assistance",
+    "Mobility Center",
+    "Ease of Access Center",
+    "Security",
+    "Backup and Restore",
+    "Management Instrumentation (WMI)",
+    "Performance Monitor",
+    "Resource Monitor",
+    "Subsystem for Linux (WSL)",
+    "PowerToys",
+    "Administrative Tools",
+    "Troubleshooting Tools",
+    "Remote Management (WinRM)",
+    "System Image Manager (SIM)",
 ]
+
+
 def execute_command_queue():
+    """Execute all commands in the global command queue sequentially.
+
+    This function processes each command in the `command_queue` list by removing it
+    from the front of the queue and invoking its `execute` method. This continues until
+    the queue is empty. It assumes that each item in `command_queue` has an `execute`
+    method and that `command_queue` is defined in the global scope of the `voicev2.py` module.
+
+    Args:
+        None
+
+    Returns:
+        None"""
     while command_queue:
         command = command_queue.pop(0)
         command.execute()
+
+
 def get_service_website(service_name):
     query = f"{service_name} official website"
     try:
         for url in search(query, num=5, stop=5):
-            # Ignore Wikipedia results
-            if 'wikipedia.org' in url:
+            if "wikipedia.org" in url:
                 continue
-
             response = requests.get(url)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            ads = soup.find_all('div', class_='uEierd')
+            soup = BeautifulSoup(response.text, "html.parser")
+            ads = soup.find_all("div", class_="uEierd")
             if not ads:
                 return url
     except Exception as e:
         print("An error occurred:", e)
     return None
-# Variable to control the loop
+
+
 running = True
-processing = False  # No need for a separate fla
+processing = False
+
+
 def process_audio(recognizer, audio_data):
+    """Processes raw audio data for speech recognition, analyzes recognized commands, and executes corresponding actions.
+
+    Args:
+        recognizer: An instance of the speech recognizer used for processing audio.
+        audio_data: Audio data to be processed, typically obtained from a microphone or audio source.
+
+    Returns:
+        None. The function performs side effects including printing messages, executing commands, and updating global state."""
     global running, processing
     if not running:
         return
-
     try:
-        audio = speech.RecognitionAudio(content=audio_data.get_raw_data(convert_rate=16000, convert_width=2))
+        audio = speech.RecognitionAudio(
+            content=audio_data.get_raw_data(convert_rate=16000, convert_width=2)
+        )
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code="en-US"
+            language_code="en-US",
         )
-
         response = client.recognize(config=config, audio=audio)
-
         print("Speech Detected!")
-
         if response.results:
-            transcribed_text = response.results[0].alternatives[0].transcript.lower().strip()
+            transcribed_text = (
+                response.results[0].alternatives[0].transcript.lower().strip()
+            )
             print("Recognized Speech:", transcribed_text)
-
-            # Split the transcribed text into separate commands
             commands = split_commands(transcribed_text)
-
             for command in commands:
-                # Check if the command starts with "open"
                 words = command.split()
                 if words[0] == "open":
-                    # Handle compound commands like "open settings command prompt firewall"
                     actions = handle_compound_command(command)
                     for action in actions:
                         action()
                 else:
                     analyze_intent(command)
-
             print("Response:", response)
-
             execute_command_queue()
-
         else:
             print("No speech recognized.")
-
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        print(
+            "Could not request results from Google Speech Recognition service; {0}".format(
+                e
+            )
+        )
     except Exception as e:
         print("Error processing audio:", e)
     finally:
         processing = False
 
-        
+
 def listen_for_speech():
     global processing, running
     recognizer = sr.Recognizer()
@@ -414,25 +564,32 @@ def listen_for_speech():
             try:
                 audio_data = recognizer.listen(source)
                 audio_array = np.frombuffer(audio_data.get_raw_data(), np.int16)
-                if has_sufficient_energy(audio_data) and simple_frequency_check(audio_array):
+                if has_sufficient_energy(audio_data) and simple_frequency_check(
+                    audio_array
+                ):
                     if not processing:
                         processing = True
-                        threading.Thread(target=process_audio, args=(recognizer, audio_data)).start()
+                        threading.Thread(
+                            target=process_audio, args=(recognizer, audio_data)
+                        ).start()
                 else:
                     print("not strong enough")
-
             except KeyboardInterrupt:
-                print("User initiated shutdown...")  # More informative message
-                running = False  # Stop the listening loop directly
+                print("User initiated shutdown...")
+                running = False
                 break
+
+
 def start_process():
     global running
     print("Transcription started... Press 'Ctrl + Q' to stop.")
     threading.Thread(target=listen_for_speech).start()
 
+
 def stop_process():
     global running
     print("Transcription stopped.")
     running = False
+
 
 start_process()
